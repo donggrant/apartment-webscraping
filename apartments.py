@@ -1,6 +1,7 @@
 from bs4 import BeautifulSoup
 import requests
 import pandas as pd
+from datetime import datetime
 
 HEADERS = {
         "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15",
@@ -26,6 +27,7 @@ class Apartments:
         self.baths = baths
         self.url = "https://www.apartments.com/" + '-'.join(self.city.lower().split(' ')) + '-' + self.state.lower() + '/'
         self.data = {}
+        self.date = datetime.now().strftime("%m-%d-%Y")
     
     def print_query(self):
         print("Location of Interest:", self.city + ", " + self.state)
@@ -34,7 +36,7 @@ class Apartments:
 
     def get_listings(self):
         main_page = requests.get(self.url, headers=HEADERS)
-        print(main_page)
+        print(main_page) # if not a 200 response, need to update headers
         main_page_html = BeautifulSoup(main_page.content, 'html.parser')
         page_range = main_page_html.find('span', class_="pageRange").text.split(' ')[-1]
         listings = []
@@ -68,8 +70,11 @@ class Apartments:
         listings = search.get_listings()
         self.data["address"] = [search.get_address(listing) for listing in listings]
         self.data["price"] = [search.get_prices(listing) for listing in listings]
-        pd.DataFrame(self.data).to_csv(self.city + "_" + self.state + "_apartments.csv", index = False)
+        pd.DataFrame(self.data).to_csv(self.city.replace(' ', '_')
+            + "_" + self.state
+            + "_" + self.date
+            + ".csv", index = False)
 
-search = Apartments("Boise", 'ID', 2, 1)
+search = Apartments("Manhattan", 'NY', 2, 1)
 search.print_query()
 search.execute()
