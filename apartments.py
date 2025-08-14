@@ -5,7 +5,7 @@ from datetime import datetime
 
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/12.1.1 Safari/605.1.15",
-    "Accept": "test/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
     "Accept-Language": "en-gb",
     "Accept-Encoding": "br, gzip, deflate",
     "Connection": "keep-alive",
@@ -56,11 +56,16 @@ class Apartments:
         main_page_html = self.fetch_html(self.url)
         if main_page_html is None:
             return None
-        page_range = main_page_html.find('span', class_="pageRange").text.split(' ')[-1]
+        page_range_element = main_page_html.find('span', class_="pageRange")
+        try:
+            page_range = int(page_range_element.text.split(' ')[-1]) if page_range_element else 1
+        except (ValueError, AttributeError):
+            page_range = 1
         listings = []
-        for i in range(1, int(page_range) + 1):
+        for i in range(1, page_range + 1):
             page_html = self.fetch_html(self.url + str(i) + "/")
-            listings += page_html.find_all('li', class_="mortar-wrapper")
+            if page_html:
+                listings += page_html.find_all('li', class_="mortar-wrapper")
         return listings
 
     def get_address(self, listing):
